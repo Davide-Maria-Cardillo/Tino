@@ -7,7 +7,7 @@ kill -9 main.py
 cd "$(dirname "$(readlink -f "$0")")"
 
 # Activate the virtual environment
-source ~/.venv/eternia/bin/activate
+source  ~/etereum/bin/activate
 
 # Execute the Python script
 python3 main.py
