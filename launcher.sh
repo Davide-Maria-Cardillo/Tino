@@ -9,4 +9,4 @@ cd "$(dirname "$(readlink -f "$0")")"
 source  ~/etereum/bin/activate
 
 # Execute the Python script
-python3 main.py
+python3 Controller_base_prova.py
