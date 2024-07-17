@@ -110,14 +110,14 @@ class Controller:
                         if 120 <= event.value <= 130:
                             new_val = 0
                         else:
-                            new_val = mapRange(event.value, 130, 255, 0, -10) if event.value > 130 else mapRange(event.value, 0, 120, 10, 0)
+                            new_val = mapRange(event.value, 130, 255, 0, -20) if event.value > 130 else mapRange(event.value, 0, 120, 20, 0)
                         _gamepadState[eventName if eventName else event.code] = new_val
 
                     if event.code == 2:
                         if 110 <= event.value <= 140:
                             new_val = 0
                         else:
-                            new_val = mapRange(event.value, 140, 255, 0, 22) if event.value > 140 else mapRange(event.value, 0, 110, -22, 0)
+                            new_val = mapRange(event.value, 140, 255, 0, -2) if event.value > 140 else mapRange(event.value, 0, 110, 2, 0)
                         _gamepadState[eventName if eventName else event.code] = new_val
 
         except Exception as e:
