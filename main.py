@@ -1,5 +1,5 @@
 import os
-import classes.Controller_new_2 as Controller_new_2
+import classes.Controller as Controller
 
 # ______________________________________________________________________________________________GLOBALS
 
@@ -15,7 +15,7 @@ CONTROLLER_ENABLED = 1
 
 def main():
     if CONTROLLER_ENABLED:
-        controller_process = Controller_new_2.Controller()
+        controller_process = Controller.Controller()
         controller_process.loop()
 
 

@@ -3,11 +3,14 @@ from datetime import datetime
 import multiprocessing
 from evdev import InputDevice, categorize, ecodes
 import time
+import csv
 
 SERIAL_RATE = 0.5
 TOT_MSG = 2
 serial_base_port = "/dev/ttyUSB0_BASE"
 ser_base = serial.Serial(serial_base_port, 115200, timeout=1)
+
+save_path = '/home/tino/Desktop/Tino2/'
 
 time.sleep(2)  # Attendi che la connessione seriale si stabilisca
 
@@ -26,19 +29,30 @@ def serial_writer(_gamepadState, write_queue):
         if (datetime.now() - prev_time).total_seconds() < SERIAL_RATE:
             continue
         else:
-            # send_base_str = ( "BF:%.2f"%_gamepadState["BF"] + "_BS:%.2f"%_gamepadState["BS"] + "_BB:%.2f"%_gamepadState["BB"])
-            send_base_str = ( "BF:%.2f"%_gamepadState["BF"] + "_BB:%.2f"%_gamepadState["BB"])
+            send_base_str = ("BF:%.2f" % _gamepadState["BF"] + "_BB:%.2f" % _gamepadState["BB"])
+            # send_base_str = ("BF:%.2f" % _gamepadState["BF"])
             write_queue.put(send_base_str)
             prev_time = datetime.now()
+
+# # Funzione per salvare i dati ricevuti
+# def save_received_data(data):
+#     with open(save_path + 'received_data.csv', mode='a', newline='') as file:
+#         writer = csv.writer(file)
+#         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+#         writer.writerow([timestamp, data])
 
 def serial_reader(read_queue):
     print("serial_reader started")
     while True:
         if ser_base.in_waiting > 0:
-            line = ser_base.readline().decode('utf-8').rstrip()
-            read_queue.put(line)
-            # time.sleep(0.3)  # Aggiungi un ritardo di 1 secondi
-
+            try:
+                line = ser_base.readline().decode('utf-8').rstrip()
+                read_queue.put(line)
+                # save_received_data(line)
+            except UnicodeDecodeError:
+                print("Decoding error occurred.")
+            except Exception as e:
+                print(f"Unexpected error: {e}")
 
 def serial_comm(write_queue, read_queue):
     print("serial_comm started")
@@ -51,7 +65,6 @@ def serial_comm(write_queue, read_queue):
         if not read_queue.empty():
             line = read_queue.get()
             print("[ARDUINO]" + line)
-            # time.sleep(0.3)  # Aggiungi un ritardo di 1 secondi
 
 class Controller:
     def loop(self):
@@ -69,50 +82,38 @@ class Controller:
         gamepad.grab()
 
         _gamepadState["BF"] = 0
-        # _gamepadState["BS"] = 0
         _gamepadState["BB"] = 0
 
-        for event in gamepad.read_loop():
-            if event.code == 0 and event.type == 0:
-                pass
-            else:
-                print("--------------" + " | code:" + str(event.code) + " | type:" + str(event.type) + " | value:" + str(event.value))
-                eventName = 0
-                if event.code == 2:
-                    eventName = "BB"
-                elif event.code == 5:
-                    eventName = "BF"
-                # elif event.code == 0 and event.type == 3:
-                #     eventName = "BS"
-                
-                #BF forward moovement
-                if event.code == 5:
-                    if event.value <= 130 and event.value >= 120:
-                        new_val = 0
-                    else:
-                        if event.value > 130:
-                            new_val = mapRange(event.value, 130, 255, 0, -10)
-                        else:
-                            new_val = mapRange(event.value, 0, 120, 10, 0)
-                    _gamepadState[eventName if eventName else event.code] = new_val
-                #BB turning in place moovement
-                if event.code == 2:
-                    if event.value <= 140 and event.value >= 110:
-                        new_val = 0
-                    else:
-                        if event.value > 140:
-                            new_val = mapRange(event.value, 140, 255, 0, 15)
-                        else:
-                            new_val = mapRange(event.value, 0, 110, -15, 0)
-                    _gamepadState[eventName if eventName else event.code] = new_val
-                # #BS lateral moovement
-                # if event.code == 0 and event.type == 3:
-                #     if event.value <= 130 and event.value >= 120:
-                #         new_val = 0
-                #     else:
-                #         if event.value > 130:
-                #             new_val = mapRange(event.value, 130, 255, 0, -10)
-                #         else:
-                #             new_val = mapRange(event.value, 0, 120, 10, 0)
-                #     _gamepadState[eventName if eventName else event.code] = new_val
+        try:
+            for event in gamepad.read_loop():
+                if event.code == 0 and event.type == 0:
+                    pass
+                else:
+                    eventName = 0
+                    if event.code == 2:
+                        eventName = "BB"
+                    elif event.code == 5:  #elif
+                        eventName = "BF"
 
+                    if event.code == 5:
+                        if 120 <= event.value <= 130:
+                            new_val = 0
+                        else:
+                            new_val = mapRange(event.value, 130, 255, 0, 0) if event.value > 130 else mapRange(event.value, 0, 120, 25, 0)
+                        _gamepadState[eventName if eventName else event.code] = new_val
+
+                    if event.code == 2:
+                        if 110 <= event.value <= 140:
+                            new_val = 0
+                        else:
+                            new_val = mapRange(event.value, 140, 255, 0, -1.1) if event.value > 140 else mapRange(event.value, 0, 110, 1.1, 0)
+                        _gamepadState[eventName if eventName else event.code] = new_val
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            gamepad.ungrab()  # Questo garantisce che il gamepad venga rilasciato correttamente anche in caso di interruzione
+
+if __name__ == "__main__":
+    controller = Controller()
+    controller.loop()
