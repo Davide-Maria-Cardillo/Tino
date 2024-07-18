@@ -30,6 +30,7 @@ def serial_writer(_gamepadState, write_queue):
             continue
         else:
             send_base_str = ("BF:%.2f" % _gamepadState["BF"] + "_BB:%.2f" % _gamepadState["BB"])
+            # send_base_str = ("BF:%.2f" % _gamepadState["BF"])
             write_queue.put(send_base_str)
             save_sent_data("BF", _gamepadState["BF"])  # Salva i dati inviati
             # save_sent_data("BB", _gamepadState["BB"])  # Salva i dati inviati
@@ -103,21 +104,21 @@ class Controller:
                     eventName = 0
                     if event.code == 2:
                         eventName = "BB"
-                    elif event.code == 5:
+                    elif event.code == 5:  #elif
                         eventName = "BF"
 
                     if event.code == 5:
                         if 120 <= event.value <= 130:
                             new_val = 0
                         else:
-                            new_val = mapRange(event.value, 130, 255, 0, -20) if event.value > 130 else mapRange(event.value, 0, 120, 20, 0)
+                            new_val = mapRange(event.value, 130, 255, 0, -22) if event.value > 130 else mapRange(event.value, 0, 120, 22, 0)
                         _gamepadState[eventName if eventName else event.code] = new_val
 
                     if event.code == 2:
                         if 110 <= event.value <= 140:
                             new_val = 0
                         else:
-                            new_val = mapRange(event.value, 140, 255, 0, -2) if event.value > 140 else mapRange(event.value, 0, 110, 2, 0)
+                            new_val = mapRange(event.value, 140, 255, 0, -0.8) if event.value > 140 else mapRange(event.value, 0, 110, 0.8, 0)
                         _gamepadState[eventName if eventName else event.code] = new_val
 
         except Exception as e:
